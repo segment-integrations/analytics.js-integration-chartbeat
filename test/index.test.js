@@ -11,7 +11,8 @@ describe('Chartbeat', function() {
   var chartbeat;
   var options = {
     uid: 'x',
-    domain: 'example.com'
+    domain: 'example.com',
+    video: false
   };
 
   beforeEach(function() {
@@ -50,7 +51,12 @@ describe('Chartbeat', function() {
 
     describe('#initialize', function() {
       it('should create window._sf_async_config', function() {
-        var expected = extend({}, options, { useCanonical: true });
+        var expected = extend({}, {
+          uid: options.uid,
+          domain: options.domain
+        }, {
+          useCanonical: true
+        });
         analytics.initialize();
         analytics.page();
         analytics.deepEqual(window._sf_async_config, expected);
@@ -58,7 +64,7 @@ describe('Chartbeat', function() {
 
       it('should inherit global window._sf_async_config defaults', function() {
         window._sf_async_config = { setting: true };
-        var expected = extend({}, options, {
+        var expected = extend({}, { uid: options.uid, domain: options.domain }, {
           setting: true,
           useCanonical: true
         });
@@ -86,6 +92,21 @@ describe('Chartbeat', function() {
   describe('loading', function() {
     it('should load', function(done) {
       analytics.load(chartbeat, done);
+    });
+
+    it('should load regular lib when video is false', function() {
+      analytics.spy(chartbeat, 'load');
+      analytics.initialize();
+      analytics.page();
+      analytics.loaded('<script src="http://static.chartbeat.com/js/chartbeat.js">');
+    });
+
+    it('should load video lib when selected', function() {
+      chartbeat.options.video = true;
+      analytics.spy(chartbeat, 'load');
+      analytics.initialize();
+      analytics.page();
+      analytics.loaded('<script src="http://static.chartbeat.com/js/chartbeat_video.js">');
     });
   });
 
