@@ -1,4 +1,9 @@
 
+1.0.5 / 2015-07-07
+==================
+
+  * Allow loading of video tag instead of normal Chartbeat tag
+
 1.0.4 / 2015-06-30
 ==================
 
