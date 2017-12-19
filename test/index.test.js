@@ -96,10 +96,10 @@ describe('Chartbeat', function() {
       });
 
       it('should set custom globals', function() {
-        chartbeat.options.subscriberEngagementMappings = { 'test segment key':'test chartbeat key' };
+        chartbeat.options.subscriberEngagementKeys = ['test segment key'];
         
         analytics.page({ path: '/path', title: 'test title', 'test segment key': 'test value' });
-        analytics.deepEqual([['test chartbeat key', 'test value']], window._cbq);
+        analytics.deepEqual([['test segment key', 'test value']], window._cbq);
         analytics.equal('test title', window._sf_async_config.title);
       });
     });
@@ -164,10 +164,10 @@ describe('Chartbeat', function() {
         analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should send subscriber engagement information if included and set', function() {
-        chartbeat.options.subscriberEngagementMappings = { 'test segment key':'test chartbeat key' };
+      it.only('should send subscriber engagement information if included and set', function() {
+        chartbeat.options.subscriberEngagementKeys = ['test segment key'];
         analytics.page({ path: '/path', 'test segment key': 'test value' });
-        analytics.called(window._cbq.push, ['test chartbeat key', 'test value']);
+        analytics.called(window._cbq.push, ['test segment key', 'test value']);
         analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
     });
