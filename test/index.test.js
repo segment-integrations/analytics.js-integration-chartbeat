@@ -164,7 +164,7 @@ describe('Chartbeat', function() {
         analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it.only('should send subscriber engagement information if included and set', function() {
+      it('should send subscriber engagement information if included and set', function() {
         chartbeat.options.subscriberEngagementKeys = ['test segment key'];
         analytics.page({ path: '/path', 'test segment key': 'test value' });
         analytics.called(window._cbq.push, ['test segment key', 'test value']);
