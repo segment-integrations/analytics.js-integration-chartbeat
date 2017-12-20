@@ -41,18 +41,15 @@ describe('Chartbeat', function() {
   });
 
   describe('before loading', function() {
-    beforeEach(function() {
-      analytics.stub(chartbeat, 'load');
-    });
-
     afterEach(function() {
       chartbeat.reset();
     });
 
     describe('initialize', function() {
-      it('should set pageCalledYet to false', function() {
+      it('should set pageCalledYet to false and ready to true', function() {
         analytics.initialize();
-        analytics.assert(!analytics.pageCalledYet);
+        analytics.assert(!chartbeat.pageCalledYet);
+        analytics.assert(chartbeat._ready);
       });
     });
 
@@ -91,16 +88,36 @@ describe('Chartbeat', function() {
       });
 
       it('should call #load', function() {
+        analytics.stub(chartbeat, 'load');
         analytics.page();
         analytics.called(chartbeat.load);
       });
 
       it('should set custom globals', function() {
         chartbeat.options.subscriberEngagementKeys = ['test segment key'];
-        
+
         analytics.page({ path: '/path', title: 'test title', 'test segment key': 'test value' });
         analytics.deepEqual([['test segment key', 'test value']], window._cbq);
         analytics.equal('test title', window._sf_async_config.title);
+      });
+
+      it('should set _ready from true to false to true', function(done) {
+        analytics.once('ready', function() {
+          analytics.assert(chartbeat._ready);
+          done();
+        });
+        analytics.assert(chartbeat._ready);
+        analytics.page();
+        analytics.assert(!chartbeat._ready);
+      });
+
+      it('should not call chartbeat page since chartbeat will page for us when it loads', function(done) {
+        analytics.once('ready', function() {
+          analytics.stub(window.pSUPERFLY, 'virtualPage');
+          analytics.didNotCall(window.pSUPERFLY.virtualPage);
+          done();
+        });
+        analytics.page();
       });
     });
   });
@@ -127,7 +144,7 @@ describe('Chartbeat', function() {
       analytics.once('ready', function() {
         analytics.stub(window.pSUPERFLY, 'virtualPage');
         analytics.stub(window._cbq, 'push');
-        done(); 
+        done();
       });
       analytics.initialize();
       analytics.page();
