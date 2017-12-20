@@ -1,4 +1,10 @@
 
+2.2.1 / 2017-12-19
+==================
+
+  * Smarter assumesPageView + feature addition: subscriber engagement
+  * no yarn.lock
+
 2.2.0 / 2017-12-19
 ==================
 
