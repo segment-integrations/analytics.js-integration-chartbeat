@@ -1,3 +1,12 @@
+
+2.2.0 / 2017-12-19
+==================
+
+  * better tests
+  * removed exclusive test
+  * changed subscriber engagement setting from obj to array
+  * added comments
+  * initial commit
 2.1.0 / 2017-08-29
 ==================
 

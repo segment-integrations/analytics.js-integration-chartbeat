@@ -33,7 +33,6 @@ describe('Chartbeat', function() {
 
   it('should have the right settings', function() {
     analytics.compare(Chartbeat, integration('Chartbeat')
-      .assumesPageview()
       .global('_sf_async_config')
       .global('_sf_endpt')
       .global('pSUPERFLY')
@@ -42,15 +41,23 @@ describe('Chartbeat', function() {
   });
 
   describe('before loading', function() {
-    beforeEach(function() {
-      analytics.stub(chartbeat, 'load');
-    });
-
     afterEach(function() {
       chartbeat.reset();
     });
 
-    describe('#initialize', function() {
+    describe('initialize', function() {
+      it('should set pageCalledYet to false and ready to true', function() {
+        analytics.initialize();
+        analytics.assert(!chartbeat.pageCalledYet);
+        analytics.assert(chartbeat._ready);
+      });
+    });
+
+    describe('first page', function() {
+      beforeEach(function() {
+        analytics.initialize();
+      });
+
       it('should create window._sf_async_config', function() {
         var expected = extend({}, {
           uid: options.uid,
@@ -58,7 +65,7 @@ describe('Chartbeat', function() {
         }, {
           useCanonical: true
         });
-        analytics.initialize();
+
         analytics.page();
         analytics.deepEqual(window._sf_async_config, expected);
       });
@@ -70,31 +77,52 @@ describe('Chartbeat', function() {
           useCanonical: true
         });
 
-        analytics.initialize();
         analytics.page();
         analytics.deepEqual(window._sf_async_config, expected);
       });
 
       it('should create window._sf_endpt', function() {
         analytics.assert(!window._sf_endpt);
-        analytics.initialize();
         analytics.page();
         analytics.equal('number', typeof window._sf_endpt);
       });
 
       it('should call #load', function() {
-        analytics.initialize();
+        analytics.stub(chartbeat, 'load');
         analytics.page();
         analytics.called(chartbeat.load);
+      });
+
+      it('should set custom globals', function() {
+        chartbeat.options.subscriberEngagementKeys = ['test segment key'];
+
+        analytics.page({ path: '/path', title: 'test title', 'test segment key': 'test value' });
+        analytics.deepEqual([['test segment key', 'test value']], window._cbq);
+        analytics.equal('test title', window._sf_async_config.title);
+      });
+
+      it('should set _ready from true to false to true', function(done) {
+        analytics.once('ready', function() {
+          analytics.assert(chartbeat._ready);
+          done();
+        });
+        analytics.assert(chartbeat._ready);
+        analytics.page();
+        analytics.assert(!chartbeat._ready);
+      });
+
+      it('should not call chartbeat page since chartbeat will page for us when it loads', function(done) {
+        analytics.once('ready', function() {
+          analytics.stub(window.pSUPERFLY, 'virtualPage');
+          analytics.didNotCall(window.pSUPERFLY.virtualPage);
+          done();
+        });
+        analytics.page();
       });
     });
   });
 
   describe('loading', function() {
-    it('should load', function(done) {
-      analytics.load(chartbeat, done);
-    });
-
     it('should load regular lib when video is false', function() {
       analytics.spy(chartbeat, 'load');
       analytics.initialize();
@@ -113,36 +141,51 @@ describe('Chartbeat', function() {
 
   describe('after loading', function() {
     beforeEach(function(done) {
-      analytics.once('ready', done);
+      analytics.once('ready', function() {
+        analytics.stub(window.pSUPERFLY, 'virtualPage');
+        analytics.stub(window._cbq, 'push');
+        done();
+      });
       analytics.initialize();
       analytics.page();
     });
 
     describe('#page', function() {
-      beforeEach(function() {
-        analytics.stub(window.pSUPERFLY, 'virtualPage');
+      it('should send a path', function() {
+        analytics.page({ path: '/path' });
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should send a path and title', function() {
+      it('should set the title', function() {
         analytics.page({ path: '/path', title: 'title' });
-        analytics.called(window.pSUPERFLY.virtualPage, '/path', 'title');
+        analytics.equal('title', window._sf_async_config.title);
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should prefer a name', function() {
+      it('should prefer a name for the title', function() {
         analytics.page('Name', { path: '/path', title: 'title' });
-        analytics.called(window.pSUPERFLY.virtualPage, '/path', 'Name');
+        analytics.equal('Name', window._sf_async_config.title);
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should prefer a name and category', function() {
+      it('should prefer a name and category for the title', function() {
         analytics.page('Category', 'Name', { path: '/path', title: 'title' });
-        analytics.called(window.pSUPERFLY.virtualPage, '/path', 'Category Name');
+        analytics.equal('Category Name', window._sf_async_config.title);
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should set the sections on the config', function() {
+      it('should set the sections and title on the config', function() {
         analytics.page('Category', 'Name', { path: '/path', title: 'title', author: 'Apple Potamus' });
         analytics.equal('Category', window._sf_async_config.sections);
         analytics.equal('Apple Potamus', window._sf_async_config.authors);
-        analytics.called(window.pSUPERFLY.virtualPage, '/path', 'Category Name');
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
+      });
+
+      it('should send subscriber engagement information if included and set', function() {
+        chartbeat.options.subscriberEngagementKeys = ['test segment key'];
+        analytics.page({ path: '/path', 'test segment key': 'test value' });
+        analytics.called(window._cbq.push, ['test segment key', 'test value']);
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
     });
   });
