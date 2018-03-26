@@ -1,3 +1,7 @@
+2.2.2 / 2018-03-26
+==================
+
+  * [Fix](https://github.com/segment-integrations/analytics.js-integration-chartbeat/pull/8): Send `document.title` as *title* to Chartbeat.
 
 2.2.1 / 2017-12-19
 ==================
