@@ -162,13 +162,20 @@ describe('Chartbeat', function() {
         analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should prefer a name for the title', function() {
+      it('should prefer a title for the name', function() {
         analytics.page('Name', { path: '/path', title: 'title' });
-        analytics.equal('Name', window._sf_async_config.title);
+        analytics.equal('title', window._sf_async_config.title);
         analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
       });
 
-      it('should prefer a name and category for the title', function() {
+      it('should prefer a title for the name and category', function() {
+        analytics.page('Category', 'Name', { path: '/path', title: 'title' });
+        analytics.equal('title', window._sf_async_config.title);
+        analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
+      });
+
+      it('should prefer a name and category for the title if sendNameAndCategoryAsTitle is true', function() {
+        chartbeat.options.sendNameAndCategoryAsTitle = true;
         analytics.page('Category', 'Name', { path: '/path', title: 'title' });
         analytics.equal('Category Name', window._sf_async_config.title);
         analytics.calledOnce(window.pSUPERFLY.virtualPage, '/path');
